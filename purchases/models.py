@@ -3,39 +3,37 @@ from django.contrib import admin
 from django.utils import timezone
 from django.db.models import Sum
 
-from users.models import User
+from purchasers.models import Purchaser
+from purchase.models import Purchase
+from stores.models import Store
 
-class PurchaseCategories(models.IntegerChoices):
-        CLOTHES = 1
-        FOOD = 2
-        SERVICES = 3
-        HEALTH = 4
-        MISCELLANEOUS = 5
-
+class QuantityUnit(models.IntegerChoices):
+    PIECE = 1
+    GRAMS = 2
 
 class PurchaseOrder(models.Model):
     purchase_date = models.DateField(default=timezone.now)
-    purchased_at_store = models.TextField()
+    purchased_at_store = models.ForeignKey(Store, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
+    total = models.BigIntegerField(default=0)
 
     def __str__(self) -> str:
          return f'{self.purchased_at_store}'
     
-    @admin.display(description='Order Total')
-    def order_total(self):
-        return self.line_items.all().aggregate(Sum('price'))['price__sum'] / 100
-    
 class PurchaseLineItem(models.Model):
     price = models.BigIntegerField(default=0)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    purchaser = models.ForeignKey(Purchaser, on_delete=models.PROTECT)
     order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='line_items')
     quantity = models.IntegerField(default=1)
-    name = models.TextField(null=True)
-    category = models.IntegerField(choices=PurchaseCategories.choices)
+    quantity_unit = models.IntegerField(choices=QuantityUnit, default=QuantityUnit.PIECE)
+    purchase = models.ForeignKey(Purchase, on_delete=models.PROTECT, related_name='line_items')
 
     @property
     def price_in_units(self):
         return self.price / 100
+    
+    def __str__(self) -> str:
+         return f'Line item in {self.order} purchase on {self.order.created_at.strftime('%d %B %Y')}'
 
     # @property
     # def total(self):

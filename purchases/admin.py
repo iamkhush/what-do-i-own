@@ -9,19 +9,19 @@ class PurchaseOrderAdmin(admin.ModelAdmin):
     inlines = [
         PurchaseOrderlineAdmin,
     ]
-    list_display = ['purchased_at_store', 'purchase_date', 'order_total']
+    list_display = ['purchased_at_store', 'purchase_date', 'total_formatted']
     date_hierarchy = 'purchase_date'
     ordering = ('-purchase_date',)
     search_fields = ('purchased_at_store',)
 
-    def total(self, obj: PurchaseOrder):
-        return obj.price * obj.quantity / 100
+    def total_formatted(self, obj: PurchaseOrder):
+        return obj.total / 100
 
 class PurchaseSummaryAdmin(admin.ModelAdmin):
     change_list_template = 'admin/purchase_summary_change_list.html'
     date_hierarchy = 'order__purchase_date'
 
-    list_filter = ('user',)
+    list_filter = ('purchaser',)
 
     def changelist_view(self, request, extra_context=None):
         response = super().changelist_view(
@@ -58,7 +58,7 @@ class PurchaseSummaryAdmin(admin.ModelAdmin):
             'pct': \
                ((x['total'] or 0) - low) / (high - low) * 100 
                if high > low else 0,
-            'user': x['user__name']
+            'purchaser': x['purchaser__name']
         } for x in summary_over_time]
 
         print(response.context_data['summary_over_time'])

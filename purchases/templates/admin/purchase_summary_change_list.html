@@ -10,7 +10,7 @@
       <tr>
         <th>
           <div class="text">
-            <a href="#">User</a>
+            <a href="#">Purchaser</a>
           </div>
         </th>
         <th>
@@ -23,7 +23,7 @@
     <tbody>
       {% for row in summary_over_time %}
       <tr class="{% cycle 'row1' 'row2' %}">
-        <td> {{ row.user }} </td>
+        <td> {{ row.purchaser }} </td>
         <td> {{ row.total | intcomma }} SEK </td>
       </tr>
       {% endfor %}
@@ -75,7 +75,7 @@
             <div class="bar" style="height:{{x.pct}}%">
                 <div class="bar-tooltip">
                     {{x.total | default:0 | intcomma }}<br>
-                    {{x.user}}
+                    {{x.purchaser}}
                 </div>
             </div>
         {% endfor %}

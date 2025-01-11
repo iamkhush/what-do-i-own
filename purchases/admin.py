@@ -43,9 +43,9 @@ class PurchaseSummaryAdmin(admin.ModelAdmin):
         #     .order_by("-total_purchases")
         # )
 
-        summary_over_time = qs.values('user__name',).annotate(
+        summary_over_time = qs.values('purchaser__name',).annotate(
             total=Sum('price')/100,
-            purchase_count=Count('user__name')).order_by('-purchase_count')
+            purchase_count=Count('purchaser__name')).order_by('-purchase_count')
         
         summary_range = summary_over_time.aggregate(
             low=Min('total'),

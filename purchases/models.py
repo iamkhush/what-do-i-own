@@ -10,6 +10,7 @@ from stores.models import Store
 class QuantityUnit(models.IntegerChoices):
     PIECE = 1
     GRAMS = 2
+    MLITRES = 3
 
 class PurchaseOrder(models.Model):
     purchase_date = models.DateField(default=timezone.now)

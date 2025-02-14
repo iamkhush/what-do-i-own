@@ -6,6 +6,7 @@ For home related expenses - idea is to tie it to the "home / ghar" user.
 # Next Steps 
 - Fix logging in production / filerotater
 - Create home page to show overall sumary
+- Add dependabot and other stuff for security
 - Improve upload functionality to confirm imformation and then save
 - create restart script.
 - Figure out way to automate adding receipts to the db

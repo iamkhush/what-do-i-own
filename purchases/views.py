@@ -98,7 +98,6 @@ def image_upload_view(request):
                                                           quantity_unit=actual_unit))
                     PurchaseLineItem.objects.bulk_create(purchases)
                     # If it's valid, return the JSON
-                    form.save()
                     return JsonResponse(json_data)
 
                 except ValidationError as e:

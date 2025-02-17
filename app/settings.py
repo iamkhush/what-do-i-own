@@ -153,8 +153,20 @@ LOGGING = {
             'class': 'logging.StreamHandler',
         },
         "file": {
-            "class": "logging.FileHandler",
-            "filename": "general.log",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs", "general.log"),
+            "maxBytes": 1024*1024*5,  # 5 MB
+            "backupCount": 5,
+            "level": "DEBUG",
+            "formatter": "verbose",
+        },
+        "error_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs", "errors.log"),
+            "maxBytes": 1024*1024*5,  # 5 MB
+            "backupCount": 5,
+            "level": "ERROR",
+            "formatter": "verbose",
         },
     },
     'loggers': {
@@ -164,7 +176,13 @@ LOGGING = {
         },
         "": {
             "level": "DEBUG",
-            "handlers": ["file"],
+            "handlers": ["file", "error_file"],
         },
-    }
+    },
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
 }

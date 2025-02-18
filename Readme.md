@@ -4,14 +4,10 @@ Idea is to make like an inventory, with purchases tied to a purchaser.
 For home related expenses - idea is to tie it to the "home / ghar" user.
 
 # Next Steps 
-- Fix logging in production / filerotater
+- reduce image size on server before processing
 - Create home page to show overall sumary
 - Add dependabot and other stuff for security
-- Improve upload functionality to confirm imformation and then save
-- create restart script.
-- Figure out way to automate adding receipts to the db
-  - Photograph of receipt  - I can use android ml kit to get text from image. https://developers.google.com/ml-kit/vision/text-recognition/android
-  - Open Banking
+- Open Banking
  
 # Deployment
 - Git setup and clone repo. Create Venv , install dependencies. Setup .env file

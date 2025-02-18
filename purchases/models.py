@@ -1,19 +1,21 @@
-from django.db import models
-from django.contrib import admin
-from django.utils import timezone
-from django.db.models import Sum
 from typing import Literal
 
-from purchasers.models import Purchaser
+from django.contrib import admin
+from django.db import models
+from django.db.models import Sum
+from django.utils import timezone
+from pydantic import BaseModel
+
 from purchase.models import Purchase
+from purchasers.models import Purchaser
 from stores.models import Store
 
-from pydantic import BaseModel
 
 class QuantityUnit(models.IntegerChoices):
     PIECE = 1
     GRAMS = 2
     MLITRES = 3
+
 
 class PurchaseOrder(models.Model):
     purchase_date = models.DateField(default=timezone.now)
@@ -22,22 +24,29 @@ class PurchaseOrder(models.Model):
     total = models.BigIntegerField(default=0)
 
     def __str__(self) -> str:
-         return f'{self.purchased_at_store}'
-    
+        return f"{self.purchased_at_store}"
+
+
 class PurchaseLineItem(models.Model):
     price = models.BigIntegerField(default=0)
     purchaser = models.ForeignKey(Purchaser, on_delete=models.PROTECT)
-    order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='line_items')
+    order = models.ForeignKey(
+        PurchaseOrder, on_delete=models.CASCADE, related_name="line_items"
+    )
     quantity = models.IntegerField(default=1)
-    quantity_unit = models.IntegerField(choices=QuantityUnit, default=QuantityUnit.PIECE)
-    purchase = models.ForeignKey(Purchase, on_delete=models.PROTECT, related_name='line_items')
+    quantity_unit = models.IntegerField(
+        choices=QuantityUnit, default=QuantityUnit.PIECE
+    )
+    purchase = models.ForeignKey(
+        Purchase, on_delete=models.PROTECT, related_name="line_items"
+    )
 
     @property
     def price_in_units(self):
         return self.price / 100
-    
-    def __str__(self) -> str:
-         return f'Line item in {self.order} purchase on {self.order.created_at.strftime('%d %B %Y')}'
+
+    # def __str__(self) -> str:
+    #     return f'Line item in {self.order} purchase on {self.order.created_at.strftime('%d %B %Y')}'
 
     # @property
     # def total(self):
@@ -51,11 +60,10 @@ class PurchaseSummary(PurchaseLineItem):
         verbose_name_plural = "Purchases Summary"
 
 
-
 class PurchaseModel(BaseModel):
     name: str
     quantity: int
-    quantity_unit: Literal["PIECE", "GRAMS" , "MLITRES"]
+    quantity_unit: Literal["PIECE", "GRAMS", "MLITRES"]
     price: int
 
 

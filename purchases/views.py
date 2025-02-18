@@ -1,33 +1,17 @@
 # views.py
 
 import json
-from datetime import datetime
-from typing import Literal
 from google import genai
 from google.genai import types
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.conf import settings 
+from django.conf import settings
+
+from .handle_order_input import handle_order_input 
 from .forms import ImageUploadForm
-from pydantic import BaseModel, TypeAdapter, ValidationError
-
-from .models import PurchaseOrder, PurchaseLineItem
-from stores.models import Store
-from purchase.models import Purchase
-from purchasers.models import Purchaser
-
-class PurchaseModel(BaseModel):
-    name: str
-    quantity: str
-    quantity_unit: Literal["PIECE", "GRAMS" , "MLITRES"]
-    price: str
+from pydantic import TypeAdapter, ValidationError
 
 
-class Order(BaseModel):
-    total_paid: float
-    purchase_date: str
-    store: str
-    purchases: list[PurchaseModel]
 
 
 prompt = """
@@ -74,29 +58,7 @@ def image_upload_view(request):
                 try:
                     # Convert the JSON into Python objects using TypeAdapter.
                     order = TypeAdapter(Order).validate_python(json_data)
-                    store, _ = Store.objects.get_or_create(name__iexact=order.store)
-                    created_at=datetime.strptime(order.purchase_date, '%Y-%m-%d')
-                    order_db = PurchaseOrder.objects.create(total=order.total_paid, purchased_at_store=store, purchase_date=created_at)
-                    purchases = []
-                    purchaser = Purchaser.objects.get(id=1) #ghar
-                    for purchase in order.purchases:
-                        item, _ = Purchase.objects.get_or_create(name__iexact=purchase.name)
-                        actual_unit = 1
-                        match purchase.quantity_unit:
-                            case 'MLITRES':
-                                actual_unit = 3
-                            case 'GRAMS':
-                                actual_unit = 2
-                            case _:
-                                actual_unit = 1
-
-                        purchases.append(PurchaseLineItem(order=order_db, 
-                                                          price=purchase.price, 
-                                                          purchaser=purchaser,
-                                                          purchase=item,
-                                                          quantity=purchase.quantity,
-                                                          quantity_unit=actual_unit))
-                    PurchaseLineItem.objects.bulk_create(purchases)
+                    handle_order_input(order)
                     # If it's valid, return the JSON
                     return JsonResponse(json_data)
 

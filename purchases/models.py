@@ -2,10 +2,13 @@ from django.db import models
 from django.contrib import admin
 from django.utils import timezone
 from django.db.models import Sum
+from typing import Literal
 
 from purchasers.models import Purchaser
 from purchase.models import Purchase
 from stores.models import Store
+
+from pydantic import BaseModel
 
 class QuantityUnit(models.IntegerChoices):
     PIECE = 1
@@ -46,3 +49,18 @@ class PurchaseSummary(PurchaseLineItem):
         proxy = True
         verbose_name = "Purchase Summary"
         verbose_name_plural = "Purchases Summary"
+
+
+
+class PurchaseModel(BaseModel):
+    name: str
+    quantity: int
+    quantity_unit: Literal["PIECE", "GRAMS" , "MLITRES"]
+    price: int
+
+
+class Order(BaseModel):
+    total_paid: int
+    purchase_date: str
+    store: str
+    purchases: list[PurchaseModel]

@@ -1,10 +1,13 @@
 # views.py
 
 import json
+import logging
 
 from django.conf import settings
+from django.core.files.storage import default_storage
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.urls import reverse
 from google import genai
 from google.genai import types
 from pydantic import TypeAdapter, ValidationError
@@ -12,6 +15,8 @@ from pydantic import TypeAdapter, ValidationError
 from .forms import ImageUploadForm
 from .handle_order_input import handle_order_input
 from .models import Order
+
+logger = logging.getLogger(__name__)
 
 prompt = """
 This is an invoice image.  Extract the following information and return it as a JSON string:
@@ -36,14 +41,16 @@ def image_upload_view(request):
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
         if form.is_valid():
             image = form.cleaned_data["image"]
-            # Read the image file
             image_data = image.read()
+            image_content_type = image.content_type  # Store the content type!
+            image.seek(0)
+            default_storage.save(f"uploads/{image.name}", image)
             response = client.models.generate_content(
                 model="gemini-2.0-flash",
                 contents=[
                     prompt,
                     types.Part.from_bytes(
-                        data=image_data, mime_type=image.content_type
+                        data=image_data, mime_type=image_content_type
                     ),
                 ],
                 config={
@@ -51,26 +58,31 @@ def image_upload_view(request):
                     "response_schema": Order,
                 },
             )
-            print(f"Full Gemini API Response: {response.text}")  # Debugging
+            logger.debug(f"Full Gemini API Response: {response.text}")  # Debugging
             try:
                 json_data = json.loads(response.text)
+                logger.debug(f"JSON Data received from Gemini: {json_data}")
 
                 # Attempt to validate and convert with Pydantic:
                 try:
                     # Convert the JSON into Python objects using TypeAdapter.
                     order = TypeAdapter(Order).validate_python(json_data)
-                    handle_order_input(order)
-                    # If it's valid, return the JSON
-                    return JsonResponse(json_data)
+                    purchase_order = handle_order_input(order)
+                    # Get the admin URL for the newly created PurchaseOrder
+                    admin_url = reverse(
+                        "admin:purchases_purchaseorder_change", args=[purchase_order.id]
+                    )
+                    # Redirect the user to the admin URL
+                    return redirect(admin_url)
 
                 except ValidationError as e:
-                    print(f"Pydantic Validation Error: {e}")
+                    logger.error(f"Pydantic Validation Error: {e}")
                     return JsonResponse(
                         {"error": f"Pydantic Validation Error: {e}"}, status=400
                     )
 
             except json.JSONDecodeError as e:
-                print(f"JSON Decode Error: {e}")
+                logger.error(f"JSON Decode Error: {e}")
                 return JsonResponse(
                     {"error": f"Invalid JSON response from Gemini: {e}"}, status=500
                 )

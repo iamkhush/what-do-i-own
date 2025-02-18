@@ -45,8 +45,8 @@ class PurchaseLineItem(models.Model):
     def price_in_units(self):
         return self.price / 100
 
-    # def __str__(self) -> str:
-    #     return f'Line item in {self.order} purchase on {self.order.created_at.strftime('%d %B %Y')}'
+    def __str__(self) -> str:
+        return f"Line item in {self.order} purchase on {self.order.created_at.strftime('%d %B %Y')}"
 
     # @property
     # def total(self):

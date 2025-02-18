@@ -7,7 +7,7 @@ from stores.models import Store
 from .models import Order, PurchaseLineItem, PurchaseOrder
 
 
-def handle_order_input(order: Order) -> None:
+def handle_order_input(order: Order) -> PurchaseOrder:
     store, _ = Store.objects.get_or_create(
         name__iexact=order.store, defaults={"name": order.store}
     )
@@ -41,3 +41,4 @@ def handle_order_input(order: Order) -> None:
             )
         )
     PurchaseLineItem.objects.bulk_create(purchases)
+    return order_db

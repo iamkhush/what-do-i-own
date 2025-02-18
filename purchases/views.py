@@ -7,11 +7,10 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
 
+from .models import Order
 from .handle_order_input import handle_order_input 
 from .forms import ImageUploadForm
 from pydantic import TypeAdapter, ValidationError
-
-
 
 
 prompt = """

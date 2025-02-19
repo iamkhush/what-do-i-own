@@ -4,9 +4,7 @@ Idea is to make like an inventory, with purchases tied to a purchaser.
 For home related expenses - idea is to tie it to the "home / ghar" user.
 
 # Next Steps 
-- reduce image size on server before processing
 - Create home page to show overall sumary
-- Add dependabot and other stuff for security
 - Open Banking
  
 # Deployment

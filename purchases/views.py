@@ -1,5 +1,6 @@
 # views.py
 
+import io
 import json
 import logging
 
@@ -10,6 +11,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from google import genai
 from google.genai import types
+from PIL import Image
 from pydantic import TypeAdapter, ValidationError
 
 from .forms import ImageUploadForm
@@ -41,17 +43,27 @@ def image_upload_view(request):
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
         if form.is_valid():
             image = form.cleaned_data["image"]
+            # Save the image file
+            image_path = default_storage.save(f"uploads/{image.name}", image)
+            # Read the image file
             image_data = image.read()
-            image_content_type = image.content_type  # Store the content type!
+
+            # Change the quality of the image
             image.seek(0)
-            default_storage.save(f"uploads/{image.name}", image)
+            pil_image = Image.open(image)
+            buffer = io.BytesIO()
+            pil_image.save(buffer, format="JPEG", optimize=True, quality=50)
+            image_data = buffer.getvalue()
+
+            # Log the file size of the resized image
+            resized_image_size = len(image_data)
+            logger.debug(f"Resized image size: {resized_image_size} bytes")
+
             response = client.models.generate_content(
                 model="gemini-2.0-flash",
                 contents=[
                     prompt,
-                    types.Part.from_bytes(
-                        data=image_data, mime_type=image_content_type
-                    ),
+                    types.Part.from_bytes(data=image_data, mime_type="image/jpeg"),
                 ],
                 config={
                     "response_mime_type": "application/json",

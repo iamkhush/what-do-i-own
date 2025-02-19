@@ -6,6 +6,7 @@ For home related expenses - idea is to tie it to the "home / ghar" user.
 # Next Steps 
 - Create home page to show overall sumary
 - Open Banking
+- backup of db and uploads
  
 # Deployment
 - Git setup and clone repo. Create Venv , install dependencies. Setup .env file

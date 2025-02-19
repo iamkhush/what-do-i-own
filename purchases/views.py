@@ -42,28 +42,34 @@ def image_upload_view(request):
         form = ImageUploadForm(request.POST, request.FILES)
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
         if form.is_valid():
-            image = form.cleaned_data["image"]
-            # Save the image file
-            image_path = default_storage.save(f"uploads/{image.name}", image)
-            # Read the image file
-            image_data = image.read()
+            uploaded_file = form.cleaned_data["file"]
+            file_extension = uploaded_file.name.split(".")[-1].lower()
+            binary_data = uploaded_file.read()
+            default_storage.save(f"uploads/{uploaded_file.name}", uploaded_file)
+            if file_extension in ["jpg", "jpeg", "png"]:
+                # Change the quality of the image
+                uploaded_file.seek(0)
+                pil_image = Image.open(uploaded_file)
+                buffer = io.BytesIO()
+                pil_image.save(buffer, format="JPEG", optimize=True, quality=50)
+                file_data = buffer.getvalue()
+                mime_type = "image/jpeg"
+            elif file_extension == "pdf":
+                # Handle PDF file
+                file_data = binary_data
+                mime_type = "application/pdf"
+            else:
+                return JsonResponse({"error": "Unsupported file type"}, status=400)
 
-            # Change the quality of the image
-            image.seek(0)
-            pil_image = Image.open(image)
-            buffer = io.BytesIO()
-            pil_image.save(buffer, format="JPEG", optimize=True, quality=50)
-            image_data = buffer.getvalue()
-
-            # Log the file size of the resized image
-            resized_image_size = len(image_data)
-            logger.debug(f"Resized image size: {resized_image_size} bytes")
+            # Log the file size of the resized image or PDF text
+            file_size = len(file_data)
+            logger.debug(f"Uploaded file size: {file_size} bytes")
 
             response = client.models.generate_content(
                 model="gemini-2.0-flash",
                 contents=[
                     prompt,
-                    types.Part.from_bytes(data=image_data, mime_type="image/jpeg"),
+                    types.Part.from_bytes(data=file_data, mime_type=mime_type),
                 ],
                 config={
                     "response_mime_type": "application/json",
@@ -98,13 +104,6 @@ def image_upload_view(request):
                 return JsonResponse(
                     {"error": f"Invalid JSON response from Gemini: {e}"}, status=500
                 )
-            # if response.status_code == 200:
-            #     result = response.json()
-            #     # Process the result as needed
-            #     return JsonResponse(result)
-            # else:
-            #     print(response)
-            #     return JsonResponse({'error': 'Failed to process image with OpenAI API'}, status=500)
     else:
         form = ImageUploadForm()
     return render(request, "upload.html", {"form": form})

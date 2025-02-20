@@ -13,6 +13,7 @@ ssh ${SERVER_USER}@${SERVER_IP} << EOF
     source .venv/bin/activate
     pip install -r requirements.txt
     sudo systemctl restart ${GUNICORN_SERVICE}
+    sudo service restart nginx
 EOF
 
 echo "Git pull and Gunicorn service restart completed on ${SERVER_IP}"

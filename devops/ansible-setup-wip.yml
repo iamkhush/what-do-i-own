@@ -1,0 +1,79 @@
+---
+- name: Setup and deploy the application
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Install necessary packages
+      apt:
+        name:
+          - python3-venv
+          - python3-pip
+          - postgresql
+          - nginx
+          - gunicorn
+        state: present
+
+    - name: Clone the repository
+      git:
+        repo: 'https://your-repo-url.git'
+        dest: /path/to/your/project
+
+    - name: Create virtual environment and install dependencies
+      command: >
+        bash -c "cd /path/to/your/project && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+
+    - name: Setup .env file
+      copy:
+        src: /path/to/local/.env
+        dest: /path/to/your/project/.env
+
+    - name: Setup PostgreSQL database
+      postgresql_db:
+        name: your_db_name
+        state: present
+
+    - name: Migrate and copy data
+      command: >
+        bash -c "cd /path/to/your/project && source venv/bin/activate && python manage.py migrate && python manage.py loaddata initial_data.json"
+
+    - name: Configure Nginx
+      copy:
+        src: /path/to/local/nginx.conf
+        dest: /etc/nginx/sites-available/your_project
+      notify:
+        - Restart Nginx
+
+    - name: Create symlink for Nginx
+      file:
+        src: /etc/nginx/sites-available/your_project
+        dest: /etc/nginx/sites-enabled/your_project
+        state: link
+
+    - name: Configure Gunicorn
+      copy:
+        src: /path/to/local/gunicorn.service
+        dest: /etc/systemd/system/gunicorn.service
+
+    - name: Enable and start Gunicorn service
+      systemd:
+        name: gunicorn
+        enabled: yes
+        state: started
+
+    - name: Enable and start Nginx service
+      systemd:
+        name: nginx
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: Restart Nginx
+      systemd:
+        name: nginx
+        state: restarted

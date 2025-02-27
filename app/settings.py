@@ -36,6 +36,7 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = ["127.0.0.1"] + env.list("EXTRA_ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = []
 
+FORCE_SCRIPT_NAME = env("SCRIPT_NAME", default=None)
 
 # Application definition
 

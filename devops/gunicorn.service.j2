@@ -8,13 +8,13 @@ After=network.target
 Type=notify
 NotifyAccess=main
 # the specific user that our service will run as
-User=ankush
-Group=ankush
+User={{ app_user }}
+Group={{ app_user }}
 # this user can be transiently created by systemd
 # DynamicUser=true
 RuntimeDirectory=gunicorn
-WorkingDirectory=/home/ankush/projects/what-do-i-own
-ExecStart=/home/ankush/projects/what-do-i-own/.venv/bin/gunicorn app.asgi:application -k uvicorn_worker.UvicornWorker
+WorkingDirectory={{ project_dir }}
+ExecStart={{ project_dir }}/.venv/bin/gunicorn app.asgi:application -k uvicorn_worker.UvicornWorker
 ExecReload=/bin/kill -s HUP $MAINPID
 KillMode=mixed
 TimeoutStopSec=5

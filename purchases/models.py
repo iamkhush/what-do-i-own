@@ -2,7 +2,8 @@ from typing import Literal
 
 from django.contrib import admin
 from django.db import models
-from django.db.models import Sum
+from django.db.models import F, Sum
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from pydantic import BaseModel
 
@@ -25,6 +26,15 @@ class PurchaseOrder(models.Model):
 
     def __str__(self) -> str:
         return f"{self.purchased_at_store}"
+
+    @staticmethod
+    def get_monthly_summary():
+        return (
+            PurchaseLineItem.objects.annotate(month=TruncMonth("order__purchase_date"))
+            .values("month", "purchaser__name")
+            .annotate(total=Sum(F("price") * F("quantity")) / 100)
+            .order_by("month", "purchaser__name")
+        )
 
 
 class PurchaseLineItem(models.Model):

@@ -3,6 +3,7 @@
 import io
 import json
 import logging
+from datetime import date
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -16,7 +17,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from .forms import ImageUploadForm
 from .handle_order_input import handle_order_input
-from .models import Order
+from .models import Order, PurchaseOrder
 
 logger = logging.getLogger(__name__)
 
@@ -107,3 +108,17 @@ def image_upload_view(request):
     else:
         form = ImageUploadForm()
     return render(request, "upload.html", {"form": form})
+
+
+class DateEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, date):
+            return obj.isoformat()
+        return super().default(obj)
+
+
+def monthly_summary(request):
+    summary = PurchaseOrder.get_monthly_summary()
+    data = list(summary.values("month", "purchaser__name", "total"))
+    data_json = json.dumps(data, cls=DateEncoder)
+    return render(request, "monthly_summary.html", {"data": data_json})

@@ -9,17 +9,22 @@ For home related expenses - idea is to tie it to the "home / ghar" user.
 - backup of db and uploads
  
 # Deployment
-- Git setup and clone repo. Create Venv , install dependencies. Setup .env file
-- Install postgres table, migrate and copy data. Add db secrets to .env file
-- Install nginx and create symlink to conf in devops/nginx.conf
-- Install gunicorn and symlink 2 systemd files in devops to /etc/systemd/system/. Follow documentation here - https://docs.gunicorn.org/en/latest/deploy.html#systemd
-- Set services enabled at boot -
-    - sudo systemctl start nginx.service 
-    - sudo systemctl enable nginx.service
-    - sudo systemctl start gunicorn.socket
-    - sudo systemctl enable gunicorn.socket
-    - sudo systemctl start gunicorn.service
-    - sudo systemctl enable gunicorn.service
-- Setup visudo to add sudo commands in server restart script to run with sudo without pass.
 
-# next learning step could be to automate it with ansible
+## Automated Setup Using Ansible ( on Ubuntu machine )
+```bash
+sudo apt install ansible
+
+git clone <your-repo-url>
+
+# Run the playbook
+ansible-playbook devops/ansible-playbook.yml --ask-become-pass
+
+# You'll need to provide database password as extra vars:
+ansible-playbook devops/ansible-playbook.yml --ask-become-pass -e "db_password=your_secure_password"
+```
+
+## Post-Setup Steps
+1. Edit `.env` file with your actual values
+2. Create Django superuser: `python manage.py createsuperuser`
+3. Test the application at your configured domain
+

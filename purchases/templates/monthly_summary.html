@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monthly Summary</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Monthly Summary</h1>
+    <canvas id="monthlySummaryChart" width="400" height="200"></canvas>
+    <script>
+        const ctx = document.getElementById('monthlySummaryChart').getContext('2d');
+        const data = JSON.parse('{{ data|escapejs }}');
+        const labels = [...new Set(data.map(item => item.month))];
+        const purchasers = [...new Set(data.map(item => item.purchaser__name))];
+        const datasets = purchasers.map(purchaser => {
+            return {
+                label: purchaser,
+                data: labels.map(month => {
+                    const item = data.find(d => d.month === month && d.purchaser__name === purchaser);
+                    return item ? item.total : 0;
+                }),
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            };
+        });
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

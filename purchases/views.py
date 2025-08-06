@@ -3,7 +3,7 @@
 import io
 import json
 import logging
-from datetime import date
+from datetime import date, datetime
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -31,7 +31,7 @@ This is an invoice image.  Extract the following information and return it as a 
     *   **name:** The name of the product or service purchased.
     *   **quantity:** The quantity purchased.
     *   **quantity_unit:** The unit of quanity purchased. Can be of the following PIECE, GRAMS and MLITRES. Adjust the quantity accordingly.
-    *   **price:** The price per unit of the product or service.
+    *   **price:** The price per unit of the product or service. if there are discounts on each item, reduce the price accordingly.
 
 Make sure that all prices are in basis points which means 23.8 becomes 2380.
 Ensure the JSON is valid and well-formed.  Do not include any extra text or explanations.
@@ -46,7 +46,12 @@ def image_upload_view(request):
             uploaded_file = form.cleaned_data["file"]
             file_extension = uploaded_file.name.split(".")[-1].lower()
             binary_data = uploaded_file.read()
-            default_storage.save(f"uploads/{uploaded_file.name}", uploaded_file)
+            today = datetime.today()
+            year = today.strftime("%Y")
+            month = today.strftime("%m")
+            today_str = today.strftime("%Y-%m-%d")
+            filename = f"uploads/{year}/{month}/{today_str}_{uploaded_file.name}"
+            default_storage.save(filename, uploaded_file)
             if file_extension in ["jpg", "jpeg", "png"]:
                 # Change the quality of the image
                 uploaded_file.seek(0)

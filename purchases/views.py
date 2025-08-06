@@ -30,8 +30,8 @@ This is an invoice image.  Extract the following information and return it as a 
 *  **purchases:**  A list of individual purchases.  For each purchase, extract:
     *   **name:** The name of the product or service purchased.
     *   **quantity:** The quantity purchased.
-    *   **quantity_unit:** The unit of quanity purchased. Can be of the following PIECE, GRAMS and MLITRES. Adjust the quantity accordingly.
-    *   **price:** The price per unit of the product or service. if there are discounts on each item, reduce the price accordingly.
+    *   **quantity_unit:** The unit of quantity purchased. Can be of the following PIECE, GRAMS and MLITRES. Adjust the quantity accordingly.
+    *   **price:** The price per unit of the product or service. If there are discounts on each item, reduce the price accordingly.
 
 Make sure that all prices are in basis points which means 23.8 becomes 2380.
 Ensure the JSON is valid and well-formed.  Do not include any extra text or explanations.

@@ -8,6 +8,9 @@ class PurchaseCategories(models.IntegerChoices):
     HEALTH = 4
     MISCELLANEOUS = 5
     HOUSEHOLD = 6
+    SHOES = 7
+    ELECTRONICS = 8
+    BOOKS = 9
 
 
 class Purchase(models.Model):

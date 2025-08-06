@@ -72,7 +72,7 @@ def image_upload_view(request):
             logger.debug(f"Uploaded file size: {file_size} bytes")
 
             response = client.models.generate_content(
-                model="gemini-2.0-flash",
+                model="gemini-2.5-flash-lite",
                 contents=[
                     prompt,
                     types.Part.from_bytes(data=file_data, mime_type=mime_type),
@@ -112,7 +112,11 @@ def image_upload_view(request):
                 )
     else:
         form = ImageUploadForm()
-    return render(request, "upload.html", {"form": form})
+    return render(
+        request,
+        "upload.html",
+        {"form": form, "ai_model_name": settings.GEMINI_AI_MODEL_NAME},
+    )
 
 
 class DateEncoder(json.JSONEncoder):

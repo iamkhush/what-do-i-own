@@ -238,6 +238,16 @@
         - gunicorn.socket
         - gunicorn.service
       tags: services
+    
+    - name: Restart gunicorn service
+      systemd:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - nginx
+        - gunicorn.socket
+        - gunicorn.service
+      tags: restart-services
 
   handlers:
     - name: restart nginx

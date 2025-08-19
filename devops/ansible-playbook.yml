@@ -189,10 +189,20 @@
       notify: restart nginx
       tags: nginx
 
+    - name: Generate Nginx location from template
+      template:
+        src: location.conf.j2
+        dest: /etc/nginx/conf.d/whatdoiown.location
+        owner: root
+        group: root
+        mode: '0644'
+      become: yes
+      tags: nginx
+
     - name: Generate Nginx configuration from template
       template:
         src: nginx.conf.j2
-        dest: /etc/nginx/conf.d/whatdoiown.conf
+        dest: /etc/nginx/conf.d/chaddashome.conf
         owner: root
         group: root
         mode: '0644'
@@ -244,7 +254,7 @@
         name: "{{ item }}"
         state: restarted
       loop:
-        - nginx
+        - nginx 
         - gunicorn.socket
         - gunicorn.service
       tags: restart-services

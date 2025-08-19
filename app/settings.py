@@ -127,7 +127,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = "/static/"
+STATIC_URL = "/static/what-do-i-own"
 STATIC_ROOT = env("STATIC_ROOT")
 
 MEDIA_URL = "/media/"
@@ -141,7 +141,7 @@ GEMINI_API_KEY = env("GEMINI_API_KEY")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-GEMINI_AI_MODEL_NAME = "gemini-2.5-flash-lite"
+AI_MODEL_NAME = "gemini-2.5-pro"
 
 LOGGING = {
     "version": 1,

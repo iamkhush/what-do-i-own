@@ -5,17 +5,18 @@
   become: yes
   gather_facts: no
   vars:
+    app_name: what-do-i-own
     app_user: iamkhush
-    project_dir: "/home/{{ app_user }}/projects/what-do-i-own/what-do-i-own"
+    project_dir: "/home/{{ app_user }}/projects/{{ app_name }}/{{ app_name }}"
     venv_dir: "{{ project_dir }}/.venv"
     db_name: whatdoiown
     db_user: iamkhush
-    server_name: chaddas.home
-    script_name: /what-do-i-own
+    server_name: "{{ lookup('env', 'SERVER_NAME') | default('chaddas.home', true) }}"
+    script_name: /{{ app_name }}
     ansible_become_method: sudo
     ansible_become_flags: '-H -S'
     nginx_user: nginx
-    static_root: /static/what-do-i-own
+    static_root: /static/{{ app_name }}
 
   tasks:
     - name: Update system packages
@@ -218,7 +219,7 @@
     - name: Generate Gunicorn service from template
       template:
         src: gunicorn.service.j2
-        dest: /etc/systemd/system/gunicorn.service
+        dest: "/etc/systemd/system/{{app_name}}.service"
         owner: root
         group: root
         mode: '0644'
@@ -228,7 +229,7 @@
     - name: Generate Gunicorn socket from template
       template:
         src: gunicorn.socket.j2
-        dest: /etc/systemd/system/gunicorn.socket
+        dest: "/etc/systemd/system/{{app_name}}.socket"
         owner: root
         group: root
         mode: '0644'
@@ -245,8 +246,8 @@
         daemon_reload: yes
       loop:
         - nginx
-        - gunicorn.socket
-        - gunicorn.service
+        - "{{app_name}}.socket"
+        - "{{app_name}}.service"
       tags: services
     
     - name: Restart gunicorn service
@@ -254,9 +255,9 @@
         name: "{{ item }}"
         state: restarted
       loop:
-        - nginx 
-        - gunicorn.socket
-        - gunicorn.service
+        - nginx
+        - "{{app_name}}.socket"
+        - "{{app_name}}.service"
       tags: restart-services
 
   handlers:
@@ -271,6 +272,5 @@
 
     - name: restart gunicorn
       systemd:
-        name: gunicorn.service
+        name: "{{app_name}}.service"
         state: restarted
-

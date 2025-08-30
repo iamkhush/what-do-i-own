@@ -15,6 +15,7 @@ from google.genai import types
 from PIL import Image
 from pydantic import TypeAdapter, ValidationError
 
+from .ai_clients import GeminiInvoiceAIClient, InvoiceAIClient
 from .forms import ImageUploadForm
 from .handle_order_input import handle_order_input
 from .models import Order, PurchaseOrder
@@ -24,24 +25,32 @@ logger = logging.getLogger(__name__)
 prompt = """
 This is an invoice image.  Extract the following information and return it as a JSON string:
 
-*  **total_paid:** The total amount paid on the invoice.
+*  **total_paid:** The total amount paid on the invoice in basis points.
 *  **store:** The name of the store.
 *  **purchase_date:** Date of purchase in yyyy-mm-dd format.
-*  **purchases:**  A list of individual purchases.  For each purchase, extract:
-    *   **name:** The name of the product or service purchased.
+*  **purchases:**  A list of individual purchases. For each purchase, extract:
+    *   **name:** The name of the product or service purchased. 
     *   **quantity:** The quantity purchased.
     *   **quantity_unit:** The unit of quantity purchased. Can be of the following PIECE, GRAMS and MLITRES. Adjust the quantity accordingly.
-    *   **price:** The price per unit of the product or service. If there are discounts on each item, reduce the price accordingly.
+    *   **price:** The price per unit. To calculate, take the item's list price and subtract the monetary value of any discount, which may be listed on the following line, ignoring the discount's text description.
 
 Make sure that all prices are in basis points which means 23.8 becomes 2380.
-Ensure the JSON is valid and well-formed.  Do not include any extra text or explanations.
+Ensure the JSON is valid and well-formed. Do not include any extra text or explanations.
 """
+
+
+def get_invoice_ai_client():
+    # You can easily switch to another AI client here if needed
+    return GeminiInvoiceAIClient(
+        api_key=settings.GEMINI_API_KEY,
+        model_name=getattr(settings, "AI_MODEL_NAME", "gemini-2.5-flash-lite"),
+    )
 
 
 def image_upload_view(request):
     if request.method == "POST":
         form = ImageUploadForm(request.POST, request.FILES)
-        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        ai_client = get_invoice_ai_client()
         if form.is_valid():
             uploaded_file = form.cleaned_data["file"]
             file_extension = uploaded_file.name.split(".")[-1].lower()
@@ -71,51 +80,45 @@ def image_upload_view(request):
             file_size = len(file_data)
             logger.debug(f"Uploaded file size: {file_size} bytes")
 
-            response = client.models.generate_content(
-                model="gemini-2.5-flash-lite",
-                contents=[
-                    prompt,
-                    types.Part.from_bytes(data=file_data, mime_type=mime_type),
-                ],
-                config={
-                    "response_mime_type": "application/json",
-                    "response_schema": Order,
-                },
+            ai_response = ai_client.extract_invoice(
+                prompt=prompt,
+                file_data=file_data,
+                mime_type=mime_type,
+                response_schema=Order,
             )
-            logger.debug(f"Full Gemini API Response: {response.text}")  # Debugging
+            logger.debug(f"Full AI API Response: {ai_response}")
             try:
-                json_data = json.loads(response.text)
-                logger.debug(f"JSON Data received from Gemini: {json_data}")
-
-                # Attempt to validate and convert with Pydantic:
-                try:
-                    # Convert the JSON into Python objects using TypeAdapter.
-                    order = TypeAdapter(Order).validate_python(json_data)
-                    purchase_order = handle_order_input(order)
-                    # Get the admin URL for the newly created PurchaseOrder
-                    admin_url = reverse(
-                        "admin:purchases_purchaseorder_change", args=[purchase_order.id]
-                    )
-                    # Redirect the user to the admin URL
-                    return redirect(admin_url)
-
-                except ValidationError as e:
-                    logger.error(f"Pydantic Validation Error: {e}")
-                    return JsonResponse(
-                        {"error": f"Pydantic Validation Error: {e}"}, status=400
-                    )
-
+                json_data = json.loads(ai_response)
             except json.JSONDecodeError as e:
                 logger.error(f"JSON Decode Error: {e}")
                 return JsonResponse(
-                    {"error": f"Invalid JSON response from Gemini: {e}"}, status=500
+                    {"error": f"Invalid JSON response from AI: {e}"}, status=500
+                )
+            logger.debug(f"JSON Data received from AI: {json_data}")
+
+            try:
+                order = TypeAdapter(Order).validate_python(json_data)
+                purchase_order = handle_order_input(order)
+                admin_url = reverse(
+                    "admin:purchases_purchaseorder_change", args=[purchase_order.id]
+                )
+                return redirect(admin_url)
+            except ValidationError as e:
+                logger.error(f"Pydantic Validation Error: {e}")
+                return JsonResponse(
+                    {"error": f"Pydantic Validation Error: {e}"}, status=400
                 )
     else:
         form = ImageUploadForm()
     return render(
         request,
         "upload.html",
-        {"form": form, "ai_model_name": settings.GEMINI_AI_MODEL_NAME},
+        {
+            "form": form,
+            "ai_model_name": getattr(
+                settings, "GEMINI_AI_MODEL_NAME", "gemini-2.5-flash-lite"
+            ),
+        },
     )
 
 

@@ -33,9 +33,10 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = ["127.0.0.1"] + env.list("EXTRA_ALLOWED_HOSTS")
-CSRF_TRUSTED_ORIGINS = []
+ALLOWED_HOSTS = ["127.0.0.1"] + env.list("EXTRA_ALLOWED_HOSTS", default=[])
+CSRF_TRUSTED_ORIGINS = [f"https://{env('SERVER_NAME')}", f"http://{env('SERVER_NAME')}"]
 
+USE_X_FORWARDED_HOST = True
 FORCE_SCRIPT_NAME = env("SCRIPT_NAME", default=None)
 
 # Application definition
@@ -127,11 +128,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = "/static/what-do-i-own"
-STATIC_ROOT = env("STATIC_ROOT")
+STATIC_URL = env("STATIC_URL", default="/static/")
+STATIC_ROOT = env("STATIC_ROOT", default="./staticfiles")
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+LOGIN_URL = "admin:login"
+LOGIN_REDIRECT_URL = "admin:index"
 
 OPENROUTER_API_KEY = env("OPENROUTER_API_KEY")
 GEMINI_API_KEY = env("GEMINI_API_KEY")

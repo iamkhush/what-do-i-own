@@ -16,7 +16,7 @@ def handle_order_input(order: Order) -> PurchaseOrder:
         total=order.total_paid, purchased_at_store=store, purchase_date=created_at
     )
     purchases = []
-    purchaser = Purchaser.objects.get(id=1)  # ghar
+    purchaser = Purchaser.objects.get(id=4)  # ghar
     for purchase in order.purchases:
         item, _ = Purchase.objects.get_or_create(
             name__iexact=purchase.name, defaults={"name": purchase.name}

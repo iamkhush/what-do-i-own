@@ -38,7 +38,7 @@ class PurchaseOrder(models.Model):
 
 
 class PurchaseLineItem(models.Model):
-    price = models.BigIntegerField(default=0)
+    price = models.BigIntegerField(default=0)  # this is price per unit in basis points
     purchaser = models.ForeignKey(Purchaser, on_delete=models.PROTECT)
     order = models.ForeignKey(
         PurchaseOrder, on_delete=models.CASCADE, related_name="line_items"

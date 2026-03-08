@@ -39,12 +39,39 @@ Ensure the JSON is valid and well-formed. Do not include any extra text or expla
 """
 
 
-def get_invoice_ai_client():
+def get_invoice_ai_client(model_name=None) -> InvoiceAIClient:
     # You can easily switch to another AI client here if needed
+    model_name = model_name or getattr(
+        settings, "AI_MODEL_NAME", "gemini-2.5-flash-lite"
+    )
     return GeminiInvoiceAIClient(
         api_key=settings.GEMINI_API_KEY,
-        model_name=getattr(settings, "AI_MODEL_NAME", "gemini-2.5-flash-lite"),
+        model_name=model_name,
     )
+
+
+def perform_ocr(image_data, mime_type) -> str:
+    # Try the high-accuracy model first
+    try:
+        flash_preview_client = get_invoice_ai_client(
+            model_name="gemini-3-flash-preview"
+        )
+        return flash_preview_client.extract_invoice(
+            prompt=prompt,
+            file_data=image_data,
+            mime_type=mime_type,
+            response_schema=Order,
+        )
+    except Exception:
+        # If it fails (503/429), use the reliable 2.5 model
+        print("Switching to stable backup model...")
+        flash_client = get_invoice_ai_client(model_name="gemini-2.5-flash")
+        return flash_client.extract_invoice(
+            prompt=prompt,
+            file_data=image_data,
+            mime_type=mime_type,
+            response_schema=Order,
+        )
 
 
 def image_upload_view(request):
@@ -66,7 +93,7 @@ def image_upload_view(request):
                 uploaded_file.seek(0)
                 pil_image = Image.open(uploaded_file)
                 buffer = io.BytesIO()
-                pil_image.save(buffer, format="JPEG", optimize=True, quality=50)
+                pil_image.save(buffer, format="PNG", optimize=True, quality=50)
                 file_data = buffer.getvalue()
                 mime_type = "image/jpeg"
             elif file_extension == "pdf":
@@ -80,12 +107,8 @@ def image_upload_view(request):
             file_size = len(file_data)
             logger.debug(f"Uploaded file size: {file_size} bytes")
 
-            ai_response = ai_client.extract_invoice(
-                prompt=prompt,
-                file_data=file_data,
-                mime_type=mime_type,
-                response_schema=Order,
-            )
+            ai_response = perform_ocr(file_data, mime_type)
+
             logger.debug(f"Full AI API Response: {ai_response}")
             try:
                 json_data = json.loads(ai_response)
@@ -116,7 +139,7 @@ def image_upload_view(request):
         {
             "form": form,
             "ai_model_name": getattr(
-                settings, "GEMINI_AI_MODEL_NAME", "gemini-2.5-flash-lite"
+                settings, "AI_MODEL_NAME", "gemini-2.5-flash-lite"
             ),
         },
     )

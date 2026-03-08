@@ -145,7 +145,7 @@ GEMINI_API_KEY = env("GEMINI_API_KEY")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AI_MODEL_NAME = "gemini-2.5-pro"
+AI_MODEL_NAME = "gemini-3-flash-preview"
 
 LOGGING = {
     "version": 1,
